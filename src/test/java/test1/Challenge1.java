@@ -1,8 +1,12 @@
 package test1;
 
 import java.time.Duration;
+import java.time.Month;
+import java.time.Year;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -13,32 +17,39 @@ import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-
-
 public class Challenge1 {
 
 	static WebDriver driver;
 	static WebDriverWait wait;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
+
 		ChromeOptions option = new ChromeOptions();
 		option.addArguments("--disable-notifications");
 		driver = new ChromeDriver(option);
 		wait = new WebDriverWait(driver, Duration.ofSeconds(30));
-		System.setProperty("webdriver.chrome.driver",
-				"src/test/resources/chromedriver.exe");
+		System.setProperty("webdriver.chrome.driver", "src/test/resources/chromedriver.exe");
 		// WebDriver driver = new ChromeDriver();
 		driver.get("https://www.redbus.in");
 		driver.manage().window().maximize();
 
-		List<String> weekendDates=getWeekEndDates("Jan 2025");
+		List<String> weekendDates = getWeekEndDates("Mar 2025");
+
 		System.out.println("Weekend Dates are : " + weekendDates);
 		driver.close();
 
 	}
 
+	static List<String> getWeekEndDates(String givenMonthYear) throws Exception {
 
-	static List<String> getWeekEndDates(String givenMonthYear) {
+		try {
+			isInputDateValid(givenMonthYear);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			driver.close();
+			throw new Exception();
+		}
 
 		WebElement calendarImage = driver.findElement(By.cssSelector("i[class$='datev2']"));
 		calendarImage.click();
@@ -51,10 +62,10 @@ public class Challenge1 {
 		}
 
 		while (!monthAndYearElement.getText().contains(givenMonthYear)) {
-			
+
 			WebElement nextArrow = driver.findElement(By.cssSelector("div[class*='CalendarHeader'] div:nth-child(3)"));
 			wait.until(ExpectedConditions.elementToBeClickable(nextArrow));
-			
+
 			Actions a = new Actions(driver);
 			a.moveToElement(nextArrow).click().perform();
 
@@ -76,10 +87,36 @@ public class Challenge1 {
 		}
 
 		System.out.println("Given month and year is " + givenMonthYear);
-		
+
 		System.out.println("No. of holidays (excluding weekends) : " + holidayCountString);
 
 		return weekendDates;
+	}
+
+	static void isInputDateValid(String givenDateString) throws Exception {
+
+		Month currentMonth = java.time.LocalDate.now().getMonth();
+
+		Map<String, Month> monthMap = new HashMap<>();
+		for (Month month : Month.values()) {
+			monthMap.put(month.name().substring(0, 3).toUpperCase(), month);
+		}
+
+		Month inputMonth = monthMap.get(givenDateString.split(" ")[0].toUpperCase());
+
+		Year currentYear = Year.now();
+		Year inputYear = Year.parse(givenDateString.split(" ")[1]);
+
+		if (inputYear.compareTo(currentYear) < 0) {
+			System.out.println("Given Date is past. Please enter future/current date");
+			throw new Exception();
+		}
+
+		if (inputMonth.compareTo(currentMonth) < 0) {
+			System.out.println("Given Date is past. Please enter future/current date");
+			throw new Exception();
+		}
+
 	}
 
 }
